@@ -1,0 +1,2 @@
+# Aurora runtime dependency (Qt Widgets + QtMultimedia)
+PySide6>=6.6,<7

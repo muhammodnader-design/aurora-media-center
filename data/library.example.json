@@ -1,0 +1,138 @@
+{
+  "categories": [
+    {
+      "id": "movies",
+      "label": "Movies",
+      "icon": "🎬",
+      "items": [
+        {
+          "title": "Aurora Demo Clip",
+          "meta": "Bundled demo • MP4 • 0:06",
+          "description": "A small locally generated clip that ships with Aurora. Replace it with your own files, or scan a folder from Settings (F3).",
+          "hue": 190,
+          "icon": "🎬",
+          "file": "media/demo_clip.mp4",
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "id": "tv",
+      "label": "TV Shows",
+      "icon": "📺",
+      "items": [
+        {
+          "title": "Demo Episode",
+          "meta": "Season 1 • Episode 1 • 0:06",
+          "description": "Put series here. Point \"file\" at an episode, or scan a folder whose path contains tv, series, or season.",
+          "hue": 265,
+          "icon": "📺",
+          "file": "media/demo_clip.mp4",
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "id": "music",
+      "label": "Music",
+      "icon": "🎵",
+      "items": [
+        {
+          "title": "Demo Tone",
+          "meta": "Bundled demo • WAV • 0:06",
+          "description": "A short test tone. Audio keeps playing while you browse the rest of the library.",
+          "hue": 145,
+          "icon": "🎵",
+          "file": "media/demo_tone.wav",
+          "duration": 6
+        }
+      ]
+    },
+    {
+      "id": "pictures",
+      "label": "Pictures",
+      "icon": "🖼",
+      "items": [
+        {
+          "title": "Demo Slide 1",
+          "meta": "Bundled demo • PNG",
+          "description": "Pictures open as a fullscreen slideshow. The interval is set in Settings (F3).",
+          "hue": 200,
+          "icon": "🖼",
+          "file": "media/demo_slide1.png"
+        },
+        {
+          "title": "Demo Slide 2",
+          "meta": "Bundled demo • PNG",
+          "description": "Use the arrow keys to move through the slideshow, or +10 / -10 to skip.",
+          "hue": 275,
+          "icon": "🖼",
+          "file": "media/demo_slide2.png"
+        },
+        {
+          "title": "Demo Slide 3",
+          "meta": "Bundled demo • PNG",
+          "description": "Press Esc to close the slideshow and return to the library.",
+          "hue": 330,
+          "icon": "🖼",
+          "file": "media/demo_slide3.png"
+        }
+      ]
+    },
+    {
+      "id": "games",
+      "label": "Video Games",
+      "icon": "🎮",
+      "items": []
+    },
+    {
+      "id": "apps",
+      "label": "Apps",
+      "icon": "🧩",
+      "items": [
+        {
+          "title": "Notepad",
+          "meta": "System • Text editor",
+          "description": "Launches Notepad on Windows, or gedit/kate/mousepad on Linux.",
+          "hue": 220,
+          "icon": "📝",
+          "file": "C:\\Windows\\System32\\notepad.exe",
+          "file_linux": [
+            "gedit",
+            "gnome-text-editor",
+            "kate",
+            "mousepad",
+            "xed"
+          ]
+        },
+        {
+          "title": "Calculator",
+          "meta": "System • Utility",
+          "description": "Launches Calculator on Windows, or gnome-calculator/kcalc on Linux.",
+          "hue": 160,
+          "icon": "🧮",
+          "file": "C:\\Windows\\System32\\calc.exe",
+          "file_linux": [
+            "gnome-calculator",
+            "kcalc",
+            "galculator",
+            "xcalc"
+          ]
+        },
+        {
+          "title": "Paint",
+          "meta": "System • Creative",
+          "description": "Launches Paint on Windows, or Pinta/KolourPaint on Linux.",
+          "hue": 350,
+          "icon": "🎨",
+          "file": "C:\\Windows\\System32\\mspaint.exe",
+          "file_linux": [
+            "pinta",
+            "kolourpaint",
+            "drawing"
+          ]
+        }
+      ]
+    }
+  ]
+}
