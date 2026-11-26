@@ -1,4 +1,4 @@
-"""Settings screen: playback options, library/game folders, privacy toggle."""
+"""Settings screen: playback options, media folders, privacy toggle."""
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QWidget, QFrame)
 
 from core.scanner import scan_into_library
-from core.games import scan_games
 from core.resume import ResumeStore
 
 
@@ -20,7 +19,6 @@ class SettingsDialog(QDialog):
         self.root = root
         self.settings = dict(settings)
         self.settings["scan_folders"] = list(settings["scan_folders"])
-        self.settings["game_folders"] = list(settings.get("game_folders", []))
         self.setObjectName("settingsDialog")
         self.setWindowTitle("Aurora Settings")
         self.setModal(True)
@@ -106,33 +104,12 @@ class SettingsDialog(QDialog):
         folder_buttons.addWidget(self.scan_btn)
         root_layout.addLayout(folder_buttons)
 
-        # ---- games folders ----
-        section = QLabel("Games folders (launch local game executables)")
-        section.setObjectName("settingsSection")
-        root_layout.addWidget(section)
-
-        self.game_list = QListWidget()
-        self.game_list.setObjectName("folderList")
-        self.game_list.setFixedHeight(90)
-        self._fill_list(self.game_list, self.settings["game_folders"])
-        root_layout.addWidget(self.game_list)
-
-        game_buttons = QHBoxLayout()
-        game_buttons.addWidget(self._button("Add game folder…", self._add_game_folder))
-        self.game_remove_btn = self._button("Remove", self._remove_game_folder)
-        self.game_scan_btn = self._button("Scan games", self._scan_games)
-        game_buttons.addWidget(self.game_remove_btn)
-        game_buttons.addStretch(1)
-        game_buttons.addWidget(self.game_scan_btn)
-        root_layout.addLayout(game_buttons)
-
         # ---- privacy ----
         section = QLabel("Privacy")
         section.setObjectName("settingsSection")
         root_layout.addWidget(section)
         self.show_hidden = QCheckBox("Show private items")
-        self.show_hidden.setToolTip("Items marked hidden (or auto-flagged private "
-                                    "games) stay out of every category.")
+        self.show_hidden.setToolTip("Items marked hidden stay out of every category.")
         self.show_hidden.setChecked(bool(settings.get("show_hidden", False)))
         self.show_hidden.toggled.connect(self._emit_changed)
         root_layout.addWidget(self.show_hidden)
@@ -167,8 +144,6 @@ class SettingsDialog(QDialog):
     def _refresh_buttons(self):
         self.remove_btn.setEnabled(self.folder_list.count() > 0)
         self.scan_btn.setEnabled(self.folder_list.count() > 0)
-        self.game_remove_btn.setEnabled(self.game_list.count() > 0)
-        self.game_scan_btn.setEnabled(self.game_list.count() > 0)
 
     # ---- playback options ----
     def _on_volume(self, value):
@@ -217,37 +192,5 @@ class SettingsDialog(QDialog):
                                 else "No media files found in those folders.")
         except OSError as exc:
             self.status.setText(f"Scan failed: {exc}")
-        finally:
-            self._refresh_buttons()
-
-    # ---- game folders ----
-    def _add_game_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Choose a games folder")
-        if folder and folder not in self.settings["game_folders"]:
-            self.settings["game_folders"].append(folder)
-            self.game_list.addItem(folder)
-            self._refresh_buttons()
-            self.settingsChanged.emit(dict(self.settings))
-
-    def _remove_game_folder(self):
-        row = self.game_list.currentRow()
-        if row >= 0:
-            self.game_list.takeItem(row)
-            del self.settings["game_folders"][row]
-            self._refresh_buttons()
-            self.settingsChanged.emit(dict(self.settings))
-
-    def _scan_games(self):
-        self.status.setText("Scanning games…")
-        self.game_scan_btn.setEnabled(False)
-        QApplication.processEvents()
-        try:
-            count = scan_games(self.root / "data" / "library.json",
-                               self.settings["game_folders"],
-                               self.root / "data" / "covers")
-            self.status.setText(f"Found {count} games." if count
-                                else "No game executables found in those folders.")
-        except OSError as exc:
-            self.status.setText(f"Game scan failed: {exc}")
         finally:
             self._refresh_buttons()

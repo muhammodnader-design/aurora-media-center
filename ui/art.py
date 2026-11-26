@@ -1,7 +1,6 @@
 """Generated tile artwork: hue-based gradient card with an icon.
 
-If an item has an extracted icon (game executables on Windows), that image
-is drawn instead of the emoji glyph.
+If an item has a custom image, that image is drawn instead of the emoji glyph.
 """
 from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import QPixmap, QPainter, QLinearGradient, QColor, QFont, QPainterPath

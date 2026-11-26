@@ -9,7 +9,6 @@ DEFAULTS = {
     "volume": 80,                # 0..100
     "resume_enabled": True,      # remember and offer resume points
     "scan_folders": [],          # folders the library scanner walks
-    "game_folders": [],          # folders the games scanner walks
     "show_hidden": False,        # reveal private/hidden items
 }
 
@@ -40,7 +39,6 @@ def load_settings(path: Path) -> dict:
     settings["volume"] = max(0, min(100, int(settings["volume"])))
     settings["resume_enabled"] = bool(settings["resume_enabled"])
     settings["scan_folders"] = [str(p) for p in settings["scan_folders"]]
-    settings["game_folders"] = [str(p) for p in settings["game_folders"]]
     settings["start_fullscreen"] = bool(settings["start_fullscreen"])
     settings["show_hidden"] = bool(settings["show_hidden"])
     return settings

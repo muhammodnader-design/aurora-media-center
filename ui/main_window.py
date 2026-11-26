@@ -235,8 +235,7 @@ class MainWindow(QMainWindow):
         kind = kind_for(item, cat["id"])
         resume = self.controller.resume_position(item) if kind in ("video", "audio") else 0.0
         if kind == "app":
-            self.play_button.setText("🎮  Play" if cat["id"] == "games"
-                                     else "🚀  Launch")
+            self.play_button.setText("🚀  Launch")
         elif resume >= 1:
             self.play_button.setText(f"▶  Resume {fmt_time(resume)}")
         else:

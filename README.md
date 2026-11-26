@@ -14,8 +14,8 @@ no web server, no browser engine, no telemetry.
 
 ## Features
 
-- **Movies, TV, music, pictures, video games, and apps** in one keyboard-
-  and mouse-friendly library.
+- **Movies, TV, music, pictures, and apps** in one keyboard- and
+  mouse-friendly library.
 - **Real media playback** through QtMultimedia: video, audio, and a
   fullscreen picture slideshow.
 - **Playback queue** — the next track or episode starts automatically;
@@ -23,8 +23,6 @@ no web server, no browser engine, no telemetry.
 - **Resume playback** — Aurora remembers where you stopped and offers
   **Resume 1:15** the next time you open that file.
 - **Volume overlay** with keyboard, media-key, and mouse-wheel control.
-- **Game launcher** — scans game folders, extracts Windows icons, and starts
-  games with the right working directory.
 - **Privacy filter** — items marked `hidden` never appear unless you turn
   them on in Settings.
 - **Hot-reload customization** — edit `theme/theme.qss` or
@@ -148,7 +146,7 @@ A minimal item looks like this:
 | `type` | Optional override: `video`, `audio`, `pictures`, or `app` |
 | `hidden` | Keep the item private unless **Show private items** is on |
 | `art` | Optional custom tile image path |
-| `args` | Extra arguments passed when launching an app or game |
+| `args` | Extra arguments passed when launching an app |
 
 Files that cannot be resolved on the current machine fall back to simulated
 playback with a footer notice, so the interface never shows a broken tile.
@@ -167,14 +165,6 @@ Open **F3 → Add folder… → Scan now**. Aurora walks the folders and fills
 
 Hand-written items are preserved. Previously scanned items are replaced on
 each rescan.
-
-### Video games
-
-Add a games folder under **Settings → Games folders** and press
-**Scan games**. Aurora finds the main executable of each game folder (skipping
-installers, redistributables, and mod helpers), extracts its Windows icon, and
-adds it under **Video Games**. Games launch with their folder as the working
-directory. Adult-looking titles are flagged private automatically.
 
 ### Privacy
 
@@ -215,7 +205,6 @@ core/
   playback.py           QtMultimedia, slideshow, queue, resume
   resume.py             resume-point store
   scanner.py            media folder scanner
-  games.py              game detection and icon extraction
   hotreload.py          QFileSystemWatcher wrapper
   theme.py              QSS loader
 ui/
@@ -224,7 +213,7 @@ ui/
   tile_row.py           animated tile row
   now_playing.py        bottom playback bar
   volume_osd.py         volume overlay
-  settings_screen.py    settings dialog and scanners
+  settings_screen.py    settings dialog and media scanner
   background.py         animated gradient/glow
   art.py                generated tile artwork
   quit_dialog.py        quit confirmation
@@ -243,9 +232,6 @@ media/                  bundled demo clip, tone, and slides
   available to the user running Aurora.
 - **Tiles from another computer are missing** — that is intentional; scanned
   items are machine-specific. Rescan local folders in Settings.
-- **A game does not launch** — verify the executable path in
-  `data/library.json` and check that the game does not require its launcher
-  or a different working directory.
 
 ## License
 

@@ -80,12 +80,6 @@
       ]
     },
     {
-      "id": "games",
-      "label": "Video Games",
-      "icon": "🎮",
-      "items": []
-    },
-    {
       "id": "apps",
       "label": "Apps",
       "icon": "🧩",

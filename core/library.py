@@ -64,7 +64,7 @@ def load_library(path: Path, root: Path = None) -> dict:
     """Read the library file, tolerating missing/broken JSON (hot-reload safe).
 
     Relative "art" paths are resolved against the app root so tiles can show
-    extracted game icons.
+    custom cover images.
     """
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -156,5 +156,4 @@ def kind_for(item: dict, category_id: str) -> str:
         "music": "audio",
         "pictures": "pictures",
         "apps": "app",
-        "games": "app",
     }.get(category_id, "video")
