@@ -1,14 +1,35 @@
 """Settings screen: playback options, media folders, privacy toggle."""
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QObject, QRunnable, QThreadPool
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QPushButton, QListWidget, QSpinBox, QCheckBox,
-                               QSlider, QFileDialog, QApplication, QScrollArea,
+                               QSlider, QFileDialog, QScrollArea,
                                QWidget, QFrame)
 
 from core.scanner import scan_into_library
 from core.resume import ResumeStore
+
+
+class _ScanSignals(QObject):
+    finished = Signal(dict)
+    failed = Signal(str)
+
+
+class _ScanTask(QRunnable):
+    def __init__(self, library_path: Path, folders):
+        super().__init__()
+        self.library_path = library_path
+        self.folders = list(folders)
+        self.signals = _ScanSignals()
+
+    def run(self):
+        try:
+            counts = scan_into_library(self.library_path, self.folders)
+        except Exception as exc:
+            self.signals.failed.emit(str(exc))
+            return
+        self.signals.finished.emit(counts)
 
 
 class SettingsDialog(QDialog):
@@ -19,6 +40,9 @@ class SettingsDialog(QDialog):
         self.root = root
         self.settings = dict(settings)
         self.settings["scan_folders"] = list(settings["scan_folders"])
+        self.settings["program_folders"] = list(settings.get("program_folders", []))
+        self._scan_task = None
+        self._closed = False
         self.setObjectName("settingsDialog")
         self.setWindowTitle("Aurora Settings")
         self.setModal(True)
@@ -96,13 +120,48 @@ class SettingsDialog(QDialog):
         root_layout.addWidget(self.folder_list)
 
         folder_buttons = QHBoxLayout()
-        folder_buttons.addWidget(self._button("Add folder…", self._add_folder))
+        self.add_folder_btn = self._button("Add folder…", self._add_folder)
+        folder_buttons.addWidget(self.add_folder_btn)
         self.remove_btn = self._button("Remove", self._remove_folder)
         self.scan_btn = self._button("Scan now", self._scan)
         folder_buttons.addWidget(self.remove_btn)
         folder_buttons.addStretch(1)
         folder_buttons.addWidget(self.scan_btn)
         root_layout.addLayout(folder_buttons)
+
+        # ---- applications (Quick Launch) ----
+        section = QLabel("Applications (Quick Launch, F4)")
+        section.setObjectName("settingsSection")
+        root_layout.addWidget(section)
+
+        self.discover_apps = QCheckBox("Discover apps installed on this system")
+        self.discover_apps.setToolTip(
+            "Reads Start Menu shortcuts on Windows, .desktop entries on Linux, "
+            "and the Applications folders on macOS. Off by default.")
+        self.discover_apps.setChecked(bool(settings.get("discover_apps", False)))
+        self.discover_apps.toggled.connect(self._emit_changed)
+        root_layout.addWidget(self.discover_apps)
+
+        hint = QLabel("Program folders are scanned for launchable apps in the "
+                      "background when Quick Launch opens.")
+        hint.setObjectName("settingsHint")
+        hint.setWordWrap(True)
+        root_layout.addWidget(hint)
+
+        self.program_list = QListWidget()
+        self.program_list.setObjectName("folderList")
+        self.program_list.setFixedHeight(96)
+        self._fill_list(self.program_list, self.settings["program_folders"])
+        root_layout.addWidget(self.program_list)
+
+        program_buttons = QHBoxLayout()
+        program_buttons.addWidget(
+            self._button("Add program folder…", self._add_program_folder))
+        self.remove_program_btn = self._button("Remove",
+                                               self._remove_program_folder)
+        program_buttons.addWidget(self.remove_program_btn)
+        program_buttons.addStretch(1)
+        root_layout.addLayout(program_buttons)
 
         # ---- privacy ----
         section = QLabel("Privacy")
@@ -142,8 +201,20 @@ class SettingsDialog(QDialog):
             widget.addItem(label)
 
     def _refresh_buttons(self):
-        self.remove_btn.setEnabled(self.folder_list.count() > 0)
-        self.scan_btn.setEnabled(self.folder_list.count() > 0)
+        scanning = self._scan_task is not None
+        has_media = self.folder_list.count() > 0
+        self.add_folder_btn.setEnabled(not scanning)
+        self.remove_btn.setEnabled(has_media and not scanning)
+        self.scan_btn.setEnabled(has_media and not scanning)
+        self.remove_program_btn.setEnabled(self.program_list.count() > 0)
+
+    def closeEvent(self, event):
+        self._closed = True
+        super().closeEvent(event)
+
+    def done(self, result):
+        self._closed = True
+        super().done(result)
 
     # ---- playback options ----
     def _on_volume(self, value):
@@ -155,6 +226,7 @@ class SettingsDialog(QDialog):
         self.settings["slideshow_interval"] = self.interval.value()
         self.settings["start_fullscreen"] = self.fullscreen.isChecked()
         self.settings["resume_enabled"] = self.resume.isChecked()
+        self.settings["discover_apps"] = self.discover_apps.isChecked()
         self.settings["show_hidden"] = self.show_hidden.isChecked()
         self.settingsChanged.emit(dict(self.settings))
 
@@ -179,18 +251,48 @@ class SettingsDialog(QDialog):
             self._refresh_buttons()
             self.settingsChanged.emit(dict(self.settings))
 
-    def _scan(self):
-        self.status.setText("Scanning…")
-        self.scan_btn.setEnabled(False)
-        QApplication.processEvents()
-        try:
-            counts = scan_into_library(self.root / "data" / "library.json",
-                                       self.settings["scan_folders"])
-            total = sum(counts.values())
-            detail = ", ".join(f"{k}: {v}" for k, v in counts.items() if v)
-            self.status.setText(f"Found {total} files ({detail})." if total
-                                else "No media files found in those folders.")
-        except OSError as exc:
-            self.status.setText(f"Scan failed: {exc}")
-        finally:
+    # ---- program folders ----
+    def _add_program_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Choose a program folder")
+        if folder and folder not in self.settings["program_folders"]:
+            self.settings["program_folders"].append(folder)
+            self.program_list.addItem(folder)
             self._refresh_buttons()
+            self.settingsChanged.emit(dict(self.settings))
+
+    def _remove_program_folder(self):
+        row = self.program_list.currentRow()
+        if row >= 0:
+            self.program_list.takeItem(row)
+            del self.settings["program_folders"][row]
+            self._refresh_buttons()
+            self.settingsChanged.emit(dict(self.settings))
+
+    def _scan(self):
+        if self._scan_task is not None:
+            return
+        self.status.setText("Scanning media folders…")
+        task = _ScanTask(self.root / "data" / "library.json",
+                         self.settings["scan_folders"])
+        task.signals.finished.connect(self._on_scan_done)
+        task.signals.failed.connect(self._on_scan_failed)
+        self._scan_task = task
+        self._refresh_buttons()
+        QThreadPool.globalInstance().start(task)
+
+    def _on_scan_done(self, counts: dict):
+        self._scan_task = None
+        if self._closed:
+            return
+        total = sum(counts.values())
+        detail = ", ".join(f"{k}: {v}" for k, v in counts.items() if v)
+        self.status.setText(f"Found {total} files ({detail})." if total
+                            else "No media files found in those folders.")
+        self._refresh_buttons()
+
+    def _on_scan_failed(self, message: str):
+        self._scan_task = None
+        if self._closed:
+            return
+        self.status.setText(f"Scan failed: {message}")
+        self._refresh_buttons()

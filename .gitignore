@@ -13,6 +13,9 @@ env/
 data/library.json
 data/settings.json
 data/resume.json
+data/apps.json
+data/launchpad.json
+data/app_icons/
 *.log
 
 # Editors and operating systems

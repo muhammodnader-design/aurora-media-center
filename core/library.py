@@ -32,12 +32,15 @@ def resolve_file(item: dict, root: Path = None) -> str:
     candidates = _candidates(item.get(_PLATFORM_KEY)) + _candidates(item.get("file"))
     for cand in candidates:
         p = Path(cand)
-        if p.is_absolute():
-            if p.exists():
-                return str(p)
+        try:
+            if p.is_absolute():
+                if p.exists():
+                    return str(p)
+                continue
+            if root is not None and (root / cand).exists():
+                return str(root / cand)
+        except OSError:
             continue
-        if root is not None and (root / cand).exists():
-            return str(root / cand)
         found = shutil.which(cand)
         if found:
             return found
@@ -80,14 +83,18 @@ def load_library(path: Path, root: Path = None) -> dict:
             if not isinstance(it, dict):
                 continue
             art = str(it.get("art", ""))
-            if art and not Path(art).is_absolute() and (root / art).exists():
-                art = str(root / art)
+            try:
+                if art and not Path(art).is_absolute() and (root / art).exists():
+                    art = str(root / art)
+            except OSError:
+                pass
             args = it.get("args", [])
             if isinstance(args, str):
                 args = [args]
             elif not isinstance(args, list):
                 args = []
-            items.append({
+            entry = dict(it)
+            entry.update({
                 "title": str(it.get("title", "Untitled")),
                 "meta": str(it.get("meta", "")),
                 "description": str(it.get("description", "")),
@@ -104,17 +111,78 @@ def load_library(path: Path, root: Path = None) -> dict:
                 "art": art,
                 "args": [str(a) for a in args],
             })
-        categories.append({
+            items.append(entry)
+        cat_entry = {k: v for k, v in cat.items() if k != "items"}
+        cat_entry.update({
             "id": str(cat["id"]),
             "label": str(cat.get("label", cat["id"].title())),
             "icon": str(cat.get("icon", "◆")),
             "items": items,
         })
+        categories.append(cat_entry)
     return {"categories": categories}
 
 
 def save_library(path: Path, library: dict) -> None:
     path.write_text(json.dumps(library, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def remove_library_item(path: Path, category_id: str, item: dict,
+                        root: Path = None) -> bool:
+    """Remove a matching item from category_id in library.json.
+
+    Returns True when an entry was removed and saved. Never touches files
+    on disk, and leaves all other categories and custom fields intact.
+    """
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not isinstance(raw, dict):
+        return False
+    root = root or path.parent.parent
+    target_title = str(item.get("title", ""))
+    target_file = item.get("target") or resolve_file(item, root)
+    raw_file = item.get("file", "")
+
+    for cat in raw.get("categories", []):
+        if not isinstance(cat, dict) or cat.get("id") != category_id:
+            continue
+        items = cat.get("items")
+        if not isinstance(items, list):
+            return False
+        for idx, cand in enumerate(items):
+            if not isinstance(cand, dict):
+                continue
+            cand_title = str(cand.get("title", ""))
+            if cand_title != target_title:
+                continue
+            if target_file:
+                cand_resolved = resolve_file(cand, root)
+                if cand_resolved and cand_resolved == target_file:
+                    del items[idx]
+                    save_library(path, raw)
+                    return True
+            if cand.get("file", "") == raw_file and (
+                cand.get("file_windows", "") == item.get("file_windows", "")
+                and cand.get("file_linux", "") == item.get("file_linux", "")
+                and cand.get("file_mac", "") == item.get("file_mac", "")
+            ):
+                del items[idx]
+                save_library(path, raw)
+                return True
+        if target_file:
+            for idx, cand in enumerate(items):
+                if isinstance(cand, dict) and resolve_file(cand, root) == target_file:
+                    del items[idx]
+                    save_library(path, raw)
+                    return True
+        for idx, cand in enumerate(items):
+            if isinstance(cand, dict) and str(cand.get("title", "")) == target_title:
+                del items[idx]
+                save_library(path, raw)
+                return True
+    return False
 
 
 def prune_unavailable_scanned(library: dict, root: Path) -> int:

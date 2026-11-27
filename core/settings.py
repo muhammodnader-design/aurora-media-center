@@ -9,6 +9,8 @@ DEFAULTS = {
     "volume": 80,                # 0..100
     "resume_enabled": True,      # remember and offer resume points
     "scan_folders": [],          # folders the library scanner walks
+    "program_folders": [],       # folders Quick Launch scans for apps
+    "discover_apps": False,      # index installed applications (opt-in)
     "show_hidden": False,        # reveal private/hidden items
 }
 
@@ -39,6 +41,8 @@ def load_settings(path: Path) -> dict:
     settings["volume"] = max(0, min(100, int(settings["volume"])))
     settings["resume_enabled"] = bool(settings["resume_enabled"])
     settings["scan_folders"] = [str(p) for p in settings["scan_folders"]]
+    settings["program_folders"] = [str(p) for p in settings["program_folders"]]
+    settings["discover_apps"] = bool(settings["discover_apps"])
     settings["start_fullscreen"] = bool(settings["start_fullscreen"])
     settings["show_hidden"] = bool(settings["show_hidden"])
     return settings

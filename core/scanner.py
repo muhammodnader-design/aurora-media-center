@@ -4,15 +4,19 @@ Manual items (no "scanned" flag) are preserved; previously scanned items
 are replaced on each scan. The apps category is never touched.
 """
 import hashlib
+import re
 from pathlib import Path
 
 from .library import load_library, save_library
 
-VIDEO_EXTS = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".webm", ".m4v", ".mpg", ".mpeg", ".ts"}
+VIDEO_EXTS = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".webm", ".m4v", ".mpg", ".mpeg"}
 AUDIO_EXTS = {".mp3", ".flac", ".wav", ".ogg", ".oga", ".m4a", ".aac", ".wma", ".opus"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tif", ".tiff"}
 
-TV_HINTS = ("tv", "series", "season", "shows", "episodes")
+_TV_RE = re.compile(
+    r"(?:^|[^a-z0-9])(?:tv|series|seasons?|shows?|episodes?|s\d{1,2})(?:[^a-z0-9]|$)",
+    re.IGNORECASE,
+)
 ICONS = {"movies": "🎬", "tv": "📺", "music": "🎵", "pictures": "🖼"}
 
 
@@ -20,11 +24,22 @@ def _hue_for(text: str) -> int:
     return int(hashlib.md5(text.encode("utf-8")).hexdigest(), 16) % 360
 
 
+def _is_mpeg_ts(path: Path) -> bool:
+    """Distinguish MPEG transport streams from TypeScript (.ts) source files."""
+    try:
+        with path.open("rb") as fh:
+            head = fh.read(189)
+    except OSError:
+        return False
+    if len(head) < 1 or head[0] != 0x47:
+        return False
+    return len(head) < 189 or head[188] == 0x47
+
+
 def _classify(path: Path):
     ext = path.suffix.lower()
-    if ext in VIDEO_EXTS:
-        parts = [p.lower() for p in path.parts]
-        if any(any(hint in part for hint in TV_HINTS) for part in parts[:-1]):
+    if ext in VIDEO_EXTS or (ext == ".ts" and _is_mpeg_ts(path)):
+        if any(_TV_RE.search(part) for part in path.parts[:-1]):
             return "tv"
         return "movies"
     if ext in AUDIO_EXTS:

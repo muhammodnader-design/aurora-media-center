@@ -16,6 +16,9 @@ no web server, no browser engine, no telemetry.
 
 - **Movies, TV, music, pictures, and apps** in one keyboard- and
   mouse-friendly library.
+- **Quick Launch (`F4` / `▦ Apps`)** — a full-screen, searchable app grid
+  with pinned favorites, recent launches, custom program folders, and optional
+  installed-app discovery across Windows, Linux, and macOS.
 - **Real media playback** through QtMultimedia: video, audio, and a
   fullscreen picture slideshow.
 - **Playback queue** — the next track or episode starts automatically;
@@ -99,13 +102,16 @@ Options:
 | Key | Action |
 | --- | --- |
 | ↑ / ↓ | Change category |
-| ← / → | Move between tiles |
+| ← / → | Move between tiles (or seek ±10s / step slides when fullscreen media is open) |
 | Enter / Space | Play the focused item, or play/pause while the overlay is open |
-| ⏮ / ⏭ (media keys) | Previous / next item in the queue |
+| ⏮ / ⏭ (media keys, `PageUp`/`PageDown`) | Previous / next item in the queue |
 | + / − | Volume up / down (mouse wheel also works) |
-| Esc | Close the now-playing overlay and stop playback |
-| F2 | Open the Aurora folder in Explorer/Files |
+| Esc | Close Quick Launch or stop the now-playing overlay |
+| F2 | Open the Aurora folder in Explorer/Files (or **Add app…** inside Quick Launch) |
 | F3 | Settings (also the ⚙ button in the top bar) |
+| F4 | Open / close **Quick Launch** (also **▦ Apps** in the top bar) |
+| F5 | Refresh Quick Launch app discovery |
+| Delete | Remove the selected app from the **Apps** section or Quick Launch |
 | F11 | Toggle fullscreen / windowed |
 | Alt+F4 | Quit — always asks "Are you sure you want to quit?" |
 
@@ -205,15 +211,19 @@ core/
   playback.py           QtMultimedia, slideshow, queue, resume
   resume.py             resume-point store
   scanner.py            media folder scanner
+  apps.py               cross-platform app discovery and launching
+  app_store.py          Quick Launch cache, pins, recents, and hidden state
   hotreload.py          QFileSystemWatcher wrapper
   theme.py              QSS loader
 ui/
   main_window.py        layout, navigation, hot reload, quit dialog
   category_menu.py      animated category list
   tile_row.py           animated tile row
+  launchpad.py          full-screen Quick Launch overlay
+  app_grid.py           scrollable 10-foot icon grid for Quick Launch
   now_playing.py        bottom playback bar
   volume_osd.py         volume overlay
-  settings_screen.py    settings dialog and media scanner
+  settings_screen.py    settings dialog, media scanner, and app sources
   background.py         animated gradient/glow
   art.py                generated tile artwork
   quit_dialog.py        quit confirmation

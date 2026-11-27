@@ -4,6 +4,7 @@
 cd "$(dirname "$0")" || exit 1
 
 has() { command -v "$1" >/dev/null 2>&1; }
+is_py311() { "$1" -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" >/dev/null 2>&1; }
 imports_pyside() { "$1" -c "import PySide6" >/dev/null 2>&1; }
 
 install_python() {
@@ -25,26 +26,26 @@ install_python() {
     fi
 }
 
-# ---- 1. prefer an interpreter that already has PySide6 ----
+# ---- 1. prefer an interpreter (3.11+) that already has PySide6 ----
 PY=""
 for cand in python3 python; do
-    if has "$cand" && imports_pyside "$cand"; then
+    if has "$cand" && is_py311 "$cand" && imports_pyside "$cand"; then
         PY="$cand"
         break
     fi
 done
 
-# ---- 2. otherwise any Python will do ----
+# ---- 2. otherwise any Python 3.11+ will do ----
 if [ -z "$PY" ]; then
     for cand in python3 python; do
-        if has "$cand"; then
+        if has "$cand" && is_py311 "$cand"; then
             PY="$cand"
             break
         fi
     done
 fi
 
-# ---- 3. no Python at all: ask before installing ----
+# ---- 3. no Python 3.11+ found: ask before installing ----
 if [ -z "$PY" ]; then
     echo "Python 3.11+ was not found on this system."
     read -r -p "Install Python now? [y/N] " answer
@@ -58,10 +59,10 @@ if [ -z "$PY" ]; then
             ;;
     esac
     for cand in python3 python; do
-        if has "$cand"; then PY="$cand"; break; fi
+        if has "$cand" && is_py311 "$cand"; then PY="$cand"; break; fi
     done
     if [ -z "$PY" ]; then
-        echo "Python installation did not complete. Install Python 3.11+ manually and retry." >&2
+        echo "Python 3.11+ installation did not complete. Install Python 3.11+ manually and retry." >&2
         exit 1
     fi
 fi

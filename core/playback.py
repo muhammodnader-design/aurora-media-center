@@ -7,12 +7,11 @@ fall back to simulated playback so the shell always works out of the box.
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, QUrl, Signal
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import QProcess
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput, QMediaDevices
 
 from .library import resolve_file
 from .resume import ResumeStore, key_for_file
+from .apps import guess_kind, launch_app
 
 
 def fmt_time(seconds: float) -> str:
@@ -50,9 +49,14 @@ class PlaybackController(QObject):
 
         # real media
         self._player = QMediaPlayer(self)
-        self._audio = QAudioOutput(self)
-        self._player.setAudioOutput(self._audio)
-        self._audio.setVolume(settings["volume"] / 100.0)
+        self._audio = None
+        if QMediaDevices.audioOutputs():
+            try:
+                self._audio = QAudioOutput(self)
+                self._player.setAudioOutput(self._audio)
+                self._audio.setVolume(settings["volume"] / 100.0)
+            except Exception:
+                self._audio = None
         self._player.positionChanged.connect(self._media_position)
         self._player.durationChanged.connect(self._media_duration)
         self._player.playbackStateChanged.connect(self._media_state)
@@ -76,7 +80,8 @@ class PlaybackController(QObject):
 
     def update_settings(self, settings: dict):
         self.settings = settings
-        self._audio.setVolume(settings["volume"] / 100.0)
+        if self._audio is not None:
+            self._audio.setVolume(settings["volume"] / 100.0)
         if self._mode == "slideshow" and self._playing:
             self._slide_timer.setInterval(settings["slideshow_interval"] * 1000)
             self._slide_timer.start()
@@ -100,12 +105,13 @@ class PlaybackController(QObject):
         if kind == "app":
             self.item = None
             if file:
-                args = [str(a) for a in (item.get("args") or [])]
-                ok = QProcess.startDetached(file, args, str(Path(file).parent))
-                if not ok:
-                    ok = QDesktopServices.openUrl(QUrl.fromLocalFile(file))
-                self.message.emit(f"Launched {item['title']}" if ok
-                                  else f"Could not launch: {file}")
+                ok, message = launch_app({
+                    "title": item["title"],
+                    "target": file,
+                    "args": item.get("args") or [],
+                    "kind": guess_kind(file),
+                })
+                self.message.emit(message if ok else f"Could not launch: {file}")
             else:
                 self.message.emit(f"{item['title']}: no executable available on "
                                   "this platform — set \"file\" (or "
@@ -329,7 +335,13 @@ class PlaybackController(QObject):
             return
         self.message.emit(f"Playback error: {error_string}")
         item = self.item
+        kind = self.kind
+        queue = list(self._queue)
+        queue_index = self._queue_index
         self.stop()
         if item is not None:
             self.item = item
+            self.kind = kind
+            self._queue = queue
+            self._queue_index = queue_index
             self._start_simulation(item)

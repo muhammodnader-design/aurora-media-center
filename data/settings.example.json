@@ -4,5 +4,7 @@
   "volume": 80,
   "resume_enabled": true,
   "scan_folders": [],
+  "program_folders": [],
+  "discover_apps": false,
   "show_hidden": false
 }

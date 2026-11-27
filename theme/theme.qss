@@ -43,6 +43,19 @@ QPushButton#gearButton {
     padding: 4px 10px;
 }
 QPushButton#gearButton:hover { color: #7df3e1; }
+QPushButton#appsButton {
+    background-color: rgba(16, 48, 63, 180);
+    border: 1px solid #1d4a5e;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #9fc4d4;
+    padding: 5px 16px;
+}
+QPushButton#appsButton:hover {
+    border-color: #35e0ff;
+    color: #7df3e1;
+}
 
 /* ---------- category menu (painted widget) ---------- */
 CategoryMenu {
@@ -93,6 +106,32 @@ QPushButton#playButton:hover {
 }
 QPushButton#playButton:pressed {
     background-color: #0c5f66;
+}
+QPushButton#secondaryButton {
+    background-color: rgba(16, 48, 63, 210);
+    border: 1px solid #1d4a5e;
+    border-radius: 24px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #cfe6ee;
+    padding: 10px 26px;
+}
+QPushButton#secondaryButton:hover {
+    border-color: #35e0ff;
+    color: #7df3e1;
+}
+QPushButton#dangerButton {
+    background-color: rgba(16, 48, 63, 180);
+    border: 1px solid #1d4a5e;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #9fc4d4;
+    padding: 10px 22px;
+}
+QPushButton#dangerButton:hover {
+    border-color: #f87171;
+    color: #fecaca;
 }
 
 /* ---------- footer hint ---------- */
@@ -237,6 +276,10 @@ QLabel#scanStatus {
     font-size: 13px;
     color: #7df3e1;
 }
+QLabel#settingsHint {
+    font-size: 12px;
+    color: #6f93a5;
+}
 QListWidget#folderList {
     background-color: #0b2231;
     border: 1px solid #1d4a5e;
@@ -297,6 +340,70 @@ QSlider::sub-page:horizontal {
     background-color: #0e7f86;
     border-radius: 3px;
 }
+
+/* ---------- quick launch overlay ---------- */
+QWidget#launchpad {
+    background-color: rgba(4, 16, 24, 246);
+}
+QLabel#launchTitle {
+    font-size: 32px;
+    font-weight: 700;
+    color: #7df3e1;
+    letter-spacing: 1px;
+}
+QLabel#launchSearch {
+    background-color: rgba(11, 34, 49, 235);
+    border: 1px solid #1d4a5e;
+    border-radius: 20px;
+    padding: 0 18px;
+    font-size: 15px;
+    color: #9fc4d4;
+}
+QPushButton#launchClose {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    color: #6f93a5;
+    padding: 4px 10px;
+}
+QPushButton#launchClose:hover { color: #7df3e1; }
+QLabel#launchItemTitle {
+    font-size: 22px;
+    font-weight: 600;
+    color: #eef8fc;
+}
+QLabel#launchItemPath {
+    font-size: 13px;
+    color: #6f93a5;
+}
+QLabel#launchHint {
+    font-size: 13px;
+    color: #557588;
+}
+QPushButton#launchButton, QPushButton#launchPrimary, QPushButton#launchDanger {
+    background-color: #10303f;
+    border: 1px solid #1d4a5e;
+    border-radius: 18px;
+    font-size: 14px;
+    color: #cfe6ee;
+    padding: 8px 22px;
+}
+QPushButton#launchButton:hover { border-color: #35e0ff; color: #7df3e1; }
+QPushButton#launchButton:disabled, QPushButton#launchDanger:disabled { color: #44606f; border-color: #14323f; }
+QPushButton#launchDanger:hover { border-color: #f87171; color: #fecaca; }
+QPushButton#launchPrimary {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #0e7f86, stop:1 #155e9e);
+    border: 1px solid #35e0ff;
+    font-weight: 600;
+    color: #eafcff;
+    padding: 8px 30px;
+}
+QPushButton#launchPrimary:hover {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #12a3ad, stop:1 #1d78c4);
+}
+QPushButton#launchPrimary:disabled { color: #44606f; border-color: #14323f; }
 
 /* ---------- picture slideshow stage ---------- */
 QLabel#slideshowStage {
